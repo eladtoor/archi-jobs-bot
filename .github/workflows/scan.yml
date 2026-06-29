@@ -1,0 +1,51 @@
+# Free serverless FALLBACK scheduler (no VM needed). Copy to .github/workflows/scan.yml.
+#
+# Caveats (why a VM is preferred for "never-miss"):
+#   * GitHub cron has 5–30 min delay and may SKIP runs under load → we set */15 and the
+#     boards show newest-first, so a delayed tick still catches jobs (dedup handles repeats).
+#   * GitHub auto-DISABLES scheduled workflows after 60 days with no repo commits — the
+#     commit-back step below doubles as a keepalive.
+#
+# Secrets to set in the repo (Settings → Secrets → Actions):
+#   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID  (+ optional SMTP_* / ALERT_EMAIL_TO)
+
+name: scan-jobs
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write          # to commit the dedup DB back for persistence
+
+concurrency:
+  group: scan-jobs         # never overlap runs
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run one scan cycle
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: python run.py --once
+      - name: Persist dedup state
+        run: |
+          git config user.name "arch-job-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add -f data/seen_jobs.sqlite3 data/health.json 2>/dev/null || true
+          git commit -m "chore: dedup state [skip ci]" || echo "no changes"
+          git push || true

@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Geographic scope: Beer Sheva + commuter towns (the user's chosen radius).
+# Each canonical location maps to spelling variants (substring-matched on
+# normalized text). Geo is a HARD filter only on general high-volume boards;
+# on architecture-only low-volume sources it only labels/sorts (never drops),
+# unless a clearly NON-commuter city is explicitly named (see exclude_cities).
+# ─────────────────────────────────────────────────────────────────────────────
+
+commuter_towns:
+  "באר שבע":   [באר שבע, באר-שבע, "ב\"ש", "ב'ש", beer sheva, beersheba, "be'er sheva", beer-sheva]
+  עומר:        [עומר, omer]
+  להבים:       [להבים, lehavim]
+  מיתר:        [מיתר, meitar]
+  רהט:         [רהט, rahat]
+  "בני שמעון": ["בני שמעון", bnei shimon]
+  שדרות:       [שדרות, sderot]
+  אופקים:      [אופקים, ofakim]
+  נתיבות:      [נתיבות, netivot]
+  "קריית גת":  ["קרית גת", "קריית גת", kiryat gat]
+  דימונה:      [דימונה, dimona]
+  ערד:         [ערד, arad]
+
+# Broad region words → a posting tagged only "South/Negev" is plausibly in-radius,
+# so on general boards keep it (it will be labeled region=דרום) rather than dropped.
+region_words:
+  - דרום
+  - הנגב
+  - נגב
+
+# Remote / hybrid — accepted regardless of city (she could do it from Beer Sheva).
+remote_terms:
+  - עבודה מהבית
+  - מהבית
+  - מרחוק
+  - היברידי
+  - היברידית
+  - remote
+  - hybrid
+  - work from home
+
+# Clearly NON-commuter cities. On architecture-only sources, an explicit hit here
+# (with no commuter/region/remote signal) is the only thing that drops a post.
+exclude_cities:
+  - תל אביב
+  - תל-אביב
+  - "ת\"א"
+  - הרצליה
+  - רעננה
+  - כפר סבא
+  - פתח תקווה
+  - ראש העין
+  - חיפה
+  - נתניה
+  - חדרה
+  - ירושלים
+  - מודיעין
+  - רחובות
+  - ראשון לציון
+  - חולון
+  - בת ים
+  - רמת גן
+  - גבעתיים
+  - קיסריה
+  - יקנעם
+  - כרמיאל
+  - עכו
+  - נהריה
+  - טבריה
+  - "צפת"
+  - "קריית שמונה"
+  - אילת          # Eilat/Arava out of the chosen commuter radius

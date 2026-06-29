@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Tier-0 sources (MVP). Each source = a parser + a list of query URLs.
+#
+# geo flags:
+#   arch_only:    architecture-only board → geo only labels (never drops).
+#   geo_trusted:  the query itself is narrowed to the Beer Sheva area → geo labels only.
+# All four below are GENERAL boards whose cards carry a location, so we keep
+# geo_trusted=false and rely on the client-side geo gate (matching/geo.py) to narrow
+# to the commuter towns. The board region codes are only a coarse pre-narrow — the
+# probe confirmed JobMaster's ezor code is unreliable, so geo.py is the real filter.
+#
+# Hebrew in query params is percent-encoded (verified working with curl_cffi chrome124).
+# ─────────────────────────────────────────────────────────────────────────────
+
+poll_minutes_default: 12
+rescan_hours: 2
+
+sources:
+  # AllJobs — largest board. position=397 architect, 402 interior; region=7 = South.
+  - key: alljobs
+    enabled: true
+    arch_only: false
+    geo_trusted: false
+    poll_minutes: 12
+    queries:
+      - "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=397&region=7"
+      - "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=402&region=7"
+      - "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=397&city=1961"  # Beer Sheva, any region tag
+
+  # JobKarov — engineers/architects board. speciality=1752 architecture; area=155 Negev.
+  - key: jobkarov
+    enabled: true
+    arch_only: false
+    geo_trusted: false
+    poll_minutes: 12
+    queries:
+      - "https://www.jobkarov.com/Search/?speciality=1752&area=155"
+      - "https://www.jobkarov.com/Search/?speciality=1752&cities=131"  # Beer Sheva
+
+  # JobMaster — relative timestamps make new-job diffing trivial. q=keyword (national);
+  # ezor code unreliable, so we lean on the geo gate. TODO(v2): confirm a real South code.
+  - key: jobmaster
+    enabled: true
+    arch_only: false
+    geo_trusted: false
+    poll_minutes: 12
+    queries:
+      - "https://www.jobmaster.co.il/jobs/?q=%D7%90%D7%93%D7%A8%D7%99%D7%9B%D7%9C&orderBy=1"            # אדריכל
+      - "https://www.jobmaster.co.il/jobs/?q=%D7%94%D7%A0%D7%93%D7%A1%D7%90%D7%99%20%D7%90%D7%93%D7%A8%D7%99%D7%9B%D7%9C%D7%95%D7%AA&orderBy=1"  # הנדסאי אדריכלות
+
+  # Drushim — co-largest board, SSR. National keyword path; cards sometimes hide the
+  # city, so strict geo on card text. TODO(v2): area path / internal JSON API for recall.
+  - key: drushim
+    enabled: true
+    arch_only: false
+    geo_trusted: false
+    poll_minutes: 12
+    queries:
+      - "https://www.drushim.co.il/jobs/search/%D7%90%D7%93%D7%A8%D7%99%D7%9B%D7%9C%D7%95%D7%AA/"   # אדריכלות
+      - "https://www.drushim.co.il/jobs/search/%D7%90%D7%93%D7%A8%D7%99%D7%9B%D7%9C/"               # אדריכל

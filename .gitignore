@@ -1,0 +1,14 @@
+# secrets & local state
+.env
+data/
+
+# python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# os
+Thumbs.db
+.DS_Store

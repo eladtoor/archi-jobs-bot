@@ -1,0 +1,14 @@
+# Core runtime deps for the architecture job-alert bot (MVP / Tier-0).
+# Pinned loosely; tested on Python 3.12.
+
+curl_cffi>=0.7,<1.0      # HTTP client with browser TLS/JA3 impersonation (chrome124) — beats plain-requests fingerprint flags
+selectolax>=0.3.21       # fast, lenient HTML parser (lexbor) for scraping server-rendered board pages
+PyYAML>=6.0              # config/keywords.yaml + config/sources.yaml
+APScheduler>=3.10,<4.0   # in-process scheduler for the poll loop
+python-dotenv>=1.0       # load secrets (TELEGRAM_BOT_TOKEN, etc.) from .env
+
+# Dev / test
+pytest>=8.0
+
+# --- v2 (not installed yet; uncomment when adding Archijob + browser fallback) ---
+# playwright>=1.44

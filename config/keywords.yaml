@@ -1,0 +1,219 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Hebrew architecture matcher — recall-first.
+# Philosophy (the user's #1 rule): NEVER miss a relevant job. Prefer a few extra
+# false positives over a single miss. Matching is substring-based on normalized
+# text — in Hebrew this is a feature, because prefixes attach to words
+# (e.g. "לאדריכל/ית" contains "אדריכל").
+#
+# Decision flow (see matching/classifier.py):
+#   1. reject hard-negative software-architect TITLES (unless a building role/permit co-occurs)
+#   2. reject ambiguous "ארכיטקט/architect" when tech context present and no building signal
+#   3. reject pure SALES posts (no design role)
+#   4. reject pure STRUCTURAL-engineering posts (unless אדריכל is also sought)
+#   5. reject drafting posts whose domain is clearly non-architectural (electrical/plumbing/HVAC)
+#   6. ACCEPT if any strong building signal is present (arch word / role / permit / adjacent / safe English title)
+#   7. software tokens (AutoCAD/Revit) alone are NOT sufficient
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Strongest, highest-precision signal: the אדריכל* word family (root א-ד-ר-כ-ל).
+arch_word_forms:
+  - אדריכל
+  - אדריכלות
+  - "אדר'"      # compact abbreviation seen in postings
+  - "אדר׳"      # gershayim variant (normalized to ' too, both kept for safety)
+
+# Specific building-architecture role titles (Hebrew).
+role_titles:
+  - אדריכל רישוי
+  - אדריכל פרויקטים
+  - אדריכל נוף
+  - אדריכל פנים
+  - מתכנן ערים
+  - מתכננת ערים
+  - הנדסאי אדריכלות
+  - הנדסאית אדריכלות
+  - עורך בקשה
+  - עורכת בקשה
+  - בודק היתרים
+  - בודקת היתרים
+  - בודק תכניות
+  - בודקת תכניות
+  - מהנדס רישוי
+  - מהנדסת רישוי
+  - רשות רישוי
+  - תיאום תכנון
+  - פיקוח עליון
+  - מהנדס העיר        # often filled by architects — keep (flagged via subfield)
+  - מהנדסת העיר
+
+# Building-permit / planning jargon — near-certain building-architecture context.
+permit_jargon:
+  - בקשה להיתר
+  - היתר בנייה
+  - היתרי בנייה
+  - רישוי זמין
+  - גרמושקה
+  - תכנית הגשה
+  - תכניות הגשה
+  - "תב\"ע"
+  - "מבא\"ת"
+  - תכנון מרחבי
+  - תכנון סטטוטורי
+  - ועדה מקומית
+
+# Adjacent fields — IN SCOPE per the user's wide-net choice (drafting/BIM, interior,
+# urban/landscape). Treated as strong positive for recall.
+adjacent_positive:
+  - עיצוב פנים
+  - מעצב פנים
+  - מעצבת פנים
+  - אדריכלות נוף
+  - תכנון ערים
+  - תכנון עירוני
+  - הנדסאי אדריכלות
+  - שרטט
+  - שרטוט
+  - מידול
+  - בים            # "BIM" transliterated occasionally
+
+# Safe, specific English titles (bare "architect" is intentionally NOT here — it is
+# treated as ambiguous below, because English "architect" is dominated by software).
+english_titles:
+  - landscape architect
+  - urban planner
+  - town planner
+  - interior designer
+  - architectural designer
+  - bim coordinator
+  - bim modeler
+  - bim modeller
+  - draftsman
+  - draftsperson
+
+# Software/tools — corroborating only, NEVER sufficient alone.
+software:
+  - autocad
+  - אוטוקאד
+  - revit
+  - רוויט
+  - archicad
+  - sketchup
+  - "3ds max"
+  - rhino
+  - v-ray
+  - vray
+  - indesign
+
+# ── Gates (rejection) ──────────────────────────────────────────────────────────
+
+# Explicit software-architect TITLES (multiword) — hard reject unless a building
+# role/permit co-occurs. Covers both Hebrew spellings (אדריכל* and ארכיטקט).
+reject_software_titles:
+  - אדריכל תוכנה
+  - אדריכלית תוכנה
+  - ארכיטקט תוכנה
+  - ארכיטקטית תוכנה
+  - אדריכל מערכת
+  - ארכיטקט מערכת
+  - ארכיטקט מערכות
+  - אדריכל מערכות
+  - ארכיטקט פתרונות
+  - אדריכל פתרונות
+  - ארכיטקט ענן
+  - ארכיטקט נתונים
+  - ארכיטקט רשת
+  - ארכיטקט ארגוני
+  - ארכיטקט אבטחת מידע
+  - ארכיטקטורת תוכנה
+  - ארכיטקטורת מערכת
+  - software architect
+  - system architect
+  - solution architect
+  - solutions architect
+  - cloud architect
+  - data architect
+  - network architect
+  - security architect
+  - enterprise architect
+  - integration architect
+  - devops architect
+  - sap architect
+  - salesforce architect
+
+# Ambiguous architect terms: positive ONLY with a building co-term and no tech context.
+ambiguous_terms:
+  - ארכיטקט
+  - architect
+  - architecture
+  - architectural
+
+# Building co-terms that license an ambiguous "architect" as a real match.
+building_coterms:
+  - בנייה
+  - בניין
+  - מבנה
+  - מבנים
+  - מגורים
+  - "נדל\"ן"
+  - תכנון
+  - רישוי
+  - היתר
+  - design
+  - building
+  - construction
+  - residential
+
+# Tech qualifiers / stack — signal the software sense.
+tech_qualifiers:
+  - תוכנה
+  - הייטק
+  - פיתוח תוכנה
+  - מיקרוסרוויסים
+tech_stack:
+  - aws
+  - azure
+  - kubernetes
+  - docker
+  - microservices
+  - "ci/cd"
+  - ".net"
+  - java
+  - node.js
+  - nodejs
+  - python
+  - devops
+  - sql
+  - react
+
+# Pure structural-engineering — different profession; reject unless אדריכל also sought.
+structural_terms:
+  - קונסטרוקטור
+  - מהנדס מבנים
+  - מהנדסת מבנים
+  - מהנדס בניין
+  - הנדסת מבנים
+  - הנדסה אזרחית
+  - תכנון שלד
+  - קונסטרוקציה
+
+# Real-estate sales — reject when no design role is named.
+sales_terms:
+  - מתווך
+  - מתווכת
+  - "סוכן נדל\"ן"
+  - איש מכירות
+  - אשת מכירות
+  - נציג מכירות
+  - נציגת מכירות
+  - יועץ מכירות
+  - מכירת דירות
+
+# Non-architectural drafting domains — a "שרטט/draftsman" post in these domains,
+# with no arch word/role/permit, is electrical/plumbing/HVAC drafting → reject.
+non_arch_drafting_domains:
+  - חשמל
+  - אינסטלציה
+  - צנרת
+  - מיזוג אוויר
+  - אלקטרוניקה
+  - מכונות

@@ -1,0 +1,29 @@
+# Long-lived service (recommended: Oracle Cloud Always-Free ARM VM or an always-on Pi).
+# The bot schedules its own polling + heartbeat internally (APScheduler), so this is a
+# simple always-running service.
+#
+# Install:
+#   sudo cp deploy/systemd/arch-job-bot.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now arch-job-bot
+#   journalctl -u arch-job-bot -f      # watch logs
+#
+# Adjust User and the two paths to your machine.
+
+[Unit]
+Description=Architecture job-alert bot (Beer Sheva / South)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=karinbot
+WorkingDirectory=/opt/arch-job-bot
+EnvironmentFile=/opt/arch-job-bot/.env
+ExecStart=/opt/arch-job-bot/.venv/bin/python /opt/arch-job-bot/run.py
+Restart=always
+RestartSec=30
+# keep the SQLite dedup DB on durable storage (default: ./data under WorkingDirectory)
+
+[Install]
+WantedBy=multi-user.target

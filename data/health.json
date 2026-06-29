@@ -1,0 +1,26 @@
+{
+  "alljobs": {
+    "ever_had_volume": true,
+    "consec_zero": 0,
+    "consec_fail": 0,
+    "alerted": false
+  },
+  "jobkarov": {
+    "ever_had_volume": false,
+    "consec_zero": 0,
+    "consec_fail": 1,
+    "alerted": false
+  },
+  "jobmaster": {
+    "ever_had_volume": true,
+    "consec_zero": 0,
+    "consec_fail": 0,
+    "alerted": false
+  },
+  "drushim": {
+    "ever_had_volume": true,
+    "consec_zero": 0,
+    "consec_fail": 0,
+    "alerted": false
+  }
+}

@@ -28,8 +28,11 @@ sources:
       - "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=397&city=1961"  # Beer Sheva, any region tag
 
   # JobKarov — engineers/architects board. speciality=1752 architecture; area=155 Negev.
+  # DISABLED for cloud (GitHub Actions): JobKarov blocks datacenter IPs. Works from a
+  # home/residential IP — re-enable (enabled: true) if you move to a Pi/home PC or a VM
+  # with a cleaner IP. AllJobs + JobMaster + Drushim are the backbone meanwhile.
   - key: jobkarov
-    enabled: true
+    enabled: false
     arch_only: false
     geo_trusted: false
     poll_minutes: 12

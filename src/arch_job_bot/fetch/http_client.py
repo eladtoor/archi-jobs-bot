@@ -32,7 +32,7 @@ class HttpClient:
         timeout: float = 25.0,
         min_delay: float = 1.0,
         jitter: float = 1.5,
-        max_retries: int = 3,
+        max_retries: int = 2,   # fail blocked sources fast (don't burn minutes on retries)
     ):
         if cffi_requests is None:
             raise RuntimeError("curl_cffi is not installed; run pip install -r requirements.txt")

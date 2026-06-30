@@ -54,10 +54,13 @@ class AllJobsSource(BaseSource):
             loc_el = box.css_first("div.job-content-top-location")
             location = clean(loc_el.text()).replace("מיקום המשרה:", "").strip() if loc_el else None
 
+            desc_el = box.css_first("div.job-content-top-desc")
+            description = clean(desc_el.text()) if desc_el else ""
+
             raw = clean(box.text())[:4000]
             jobs.append(JobPosting(
                 source=self.name, job_id=job_id, title=title, url=full_url,
                 company=company, city=location, posted_date=posted, salary=salary,
-                raw_text=raw,
+                raw_text=raw, description=description,
             ))
         return jobs

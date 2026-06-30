@@ -47,10 +47,16 @@ def _hits(terms: list[str], text: str) -> list[str]:
     return [t for t in terms if t and t in text]
 
 
-def classify(text: str) -> Classification:
-    """Classify a posting's combined text. Order matters: rejection gates run before
-    acceptance so an explicit software/sales/structural signal wins."""
+def classify(text: str, title: str | None = None) -> Classification:
+    """Classify a posting's role text. Order matters: rejection gates run before
+    acceptance so an explicit software/sales/structural signal wins.
+
+    `title`, when given (the pipeline passes the posting's own title), enables a
+    title-scoped reject: a role whose TITLE is clearly another profession (e.g. sales)
+    is dropped even if an architecture word appears elsewhere in the body. Default
+    None preserves the pure full-text behavior the unit tests rely on."""
     t = normalize(text)
+    tt = normalize(title) if title else ""
     kw = _kw()
 
     arch_word = _hits(kw.get("arch_word_forms", []), t)
@@ -59,6 +65,14 @@ def classify(text: str) -> Classification:
     adjacent = _hits(kw.get("adjacent_positive", []), t)
     eng_title = _hits(kw.get("english_titles", []), t)
     ambiguous = _hits(kw.get("ambiguous_terms", []), t)
+
+    # Does the TITLE itself look architectural? (used so a sales/other TITLE is not
+    # rescued by a stray arch word in the body). Empty when no title was supplied.
+    title_arch = (_hits(kw.get("arch_word_forms", []), tt)
+                  + _hits(kw.get("role_titles", []), tt)
+                  + _hits(kw.get("permit_jargon", []), tt)
+                  + _hits(kw.get("adjacent_positive", []), tt)
+                  + _hits(kw.get("english_titles", []), tt)) if tt else []
 
     # A genuine building-architecture signal (drives both acceptance and gate exceptions).
     building_signal = arch_word + role_title + permit + adjacent
@@ -89,6 +103,12 @@ def classify(text: str) -> Classification:
     sales = _hits(kw.get("sales_terms", []), t)
     if sales and not building_signal:
         return Classification(False, f"sales: {sales}")
+    # Gate 3b (title-scoped): a sales TITLE with no architecture signal IN THE TITLE is
+    # a sales job even if the body/firm-name mentions architecture (chrome can't rescue
+    # it). Only fires when the pipeline supplied a title.
+    sales_title = _hits(kw.get("sales_terms", []), tt) if tt else []
+    if sales_title and not title_arch:
+        return Classification(False, f"sales role title: {sales_title}")
 
     # ── Gate 4: pure structural engineering (kept if אדריכל is also sought) ──────
     structural = _hits(kw.get("structural_terms", []), t)

@@ -50,10 +50,14 @@ class DrushimSource(BaseSource):
             comp_el = card.css_first("span.bidi")
             company = clean(comp_el.text()) if comp_el else None
 
+            desc_el = card.css_first("div.job-intro")
+            description = clean(desc_el.text()) if desc_el else ""
+
             raw = clean(card.text())[:4000]
             posted = normalize_posted_date(raw)
             jobs.append(JobPosting(
                 source=self.name, job_id=job_id, title=title, url=full_url,
                 company=company, city=None, posted_date=posted, raw_text=raw,
+                description=description,
             ))
         return jobs

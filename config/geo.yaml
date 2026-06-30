@@ -59,6 +59,17 @@ exclude_cities:
   - חולון
   - בת ים
   - רמת גן
+  # Central-district cities the bot was leaking (no per-card location → blob fallback).
+  # The location-field allowlist already drops these on AllJobs/JobMaster; listed here
+  # so the national keyword board (Drushim) drops them too.
+  - לוד
+  - רמלה
+  - יבנה
+  - גדרה
+  - בית שמש
+  - "קרית מלאכי"
+  - "קרית עקרון"
+  - נס ציונה
   - גבעתיים
   - קיסריה
   - יקנעם

@@ -51,6 +51,9 @@ class JobKarovSource(BaseSource):
             if addr_el:
                 location = clean(addr_el.text()).replace("מיקום המשרה:", "").replace("ועוד", "").strip() or None
 
+            desc_el = card.css_first("span.description")
+            description = clean(desc_el.text()) if desc_el else ""
+
             raw = clean(card.text())[:4000]
             if not job_id:
                 m = re.search(r"/Site/(\d+)", href)
@@ -58,5 +61,6 @@ class JobKarovSource(BaseSource):
             jobs.append(JobPosting(
                 source=self.name, job_id=job_id, title=title, url=full_url,
                 company=company, city=location, posted_date=posted, raw_text=raw,
+                description=description,
             ))
         return jobs

@@ -68,12 +68,27 @@ class Pipeline:
             msg = self.health.record(source.name, fetched_ok=True, parsed_count=len(postings))
             if msg:
                 self.dispatcher.send_text(msg)
-            yield from matched
+            for p in matched:
+                yield source.name, p
 
     # ── modes ────────────────────────────────────────────────────────────────
+    def _new_sources(self) -> set[str]:
+        """On a populated DB, sources with zero stored rows are brand-new → their first
+        cycle is seeded silently (no backlog flood). On an empty DB the global seed runs."""
+        if self.dry_run or self.store.count() == 0:
+            return set()
+        new = {s.name for s in self.sources if self.store.count_by_source(s.name) == 0}
+        if new:
+            log.info("new source(s) will be silently seeded this cycle (no alerts): %s", new)
+        return new
+
     def run_cycle(self) -> int:
         alerted = 0
-        for p in self._candidates():
+        new_sources = self._new_sources()
+        for source_name, p in self._candidates():
+            if source_name in new_sources:
+                self.store.record(p)          # seed a brand-new source, no alert
+                continue
             if not self.store.is_new(p):
                 continue
             if self.dry_run:
@@ -92,9 +107,15 @@ class Pipeline:
 
     def seed(self) -> int:
         """Mark all current matches as seen WITHOUT alerting (silent first-run seed)."""
-        seeded = sum(1 for p in self._candidates() if self.store.record(p))
+        seeded = sum(1 for _src, p in self._candidates() if self.store.record(p))
         log.info("seed complete: %d job(s) marked seen (no alerts)", seeded)
         return seeded
+
+    def weekly_digest(self) -> None:
+        from .alert.digest import format_weekly_digest
+        counts = self.store.digest_counts(7)
+        self.dispatcher.send_user(format_weekly_digest(counts))
+        log.info("weekly digest sent: %d job(s) in last 7d", counts.get("total", 0))
 
     def heartbeat(self) -> None:
         total = self.store.count()
@@ -115,7 +136,9 @@ def _run_scheduler(pipe: Pipeline, interval: int) -> None:
                   next_run_time=datetime.now(), jitter=60,
                   id="poll", max_instances=1, coalesce=True)
     sched.add_job(pipe.heartbeat, "cron", hour=9, minute=0, id="heartbeat")
-    log.info("scheduler started: polling every %d min (+jitter), heartbeat 09:00", interval)
+    sched.add_job(pipe.weekly_digest, "cron", day_of_week="sun", hour=9, minute=5, id="weekly")
+    log.info("scheduler started: polling every %d min (+jitter), heartbeat 09:00, digest Sun 09:05",
+             interval)
     try:
         sched.start()
     except (KeyboardInterrupt, SystemExit):

@@ -69,3 +69,15 @@ exclude_cities:
   - "צפת"
   - "קריית שמונה"
   - אילת          # Eilat/Arava out of the chosen commuter radius
+  # Farther Western/Northern Negev (~50-70km) — beyond the chosen commuter ring.
+  # Surfaced by the South-anchored v2 sources (Maavarim); excluded so "commuter only" holds.
+  - אשקלון
+  - אשדוד
+  - אשכול
+  - שדות נגב
+  - שער הנגב
+  - מרחבים
+  - חבל יואב
+  - חבל שלום
+  - רמת נגב
+  - מצפה רמון

@@ -48,7 +48,8 @@ def _geo():
     }
     return {
         "towns": towns,
-        "regions": [normalize(v) for v in (g.get("region_words") or [])],
+        # (normalized-for-matching, original-for-display) so the label reads "דרום" not "דרומ"
+        "regions": [(normalize(v), v) for v in (g.get("region_words") or [])],
         "remote": [normalize(v) for v in (g.get("remote_terms") or [])],
         "exclude": [normalize(v) for v in (g.get("exclude_cities") or [])],
     }
@@ -69,7 +70,7 @@ def classify_location(text: str) -> GeoResult:
             city = canonical
             break
 
-    region = next((r for r in g["regions"] if r in t), None)
+    region = next((orig for norm, orig in g["regions"] if norm in t), None)
     remote = any(r in t for r in g["remote"])
     # Only count an exclusion if it isn't actually one of our commuter towns
     # (e.g. avoid a substring surprise). Commuter match always wins.

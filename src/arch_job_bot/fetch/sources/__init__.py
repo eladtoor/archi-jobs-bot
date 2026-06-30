@@ -11,9 +11,11 @@ import logging
 from ... import config
 from ..base import BaseSource
 from .alljobs import AllJobsSource
+from .beersheva_muni import BeerShevaMuniSource
 from .drushim import DrushimSource
 from .jobkarov import JobKarovSource
 from .jobmaster import JobMasterSource
+from .maavarim import MaavarimSource
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +24,9 @@ REGISTRY: dict[str, type[BaseSource]] = {
     "drushim": DrushimSource,
     "jobmaster": JobMasterSource,
     "jobkarov": JobKarovSource,
+    # v2 — South public-sector salaried
+    "beersheva_muni": BeerShevaMuniSource,
+    "maavarim": MaavarimSource,
 }
 
 

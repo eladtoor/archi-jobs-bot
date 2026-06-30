@@ -9,9 +9,11 @@ import pathlib
 import pytest
 
 from arch_job_bot.fetch.sources.alljobs import AllJobsSource
+from arch_job_bot.fetch.sources.beersheva_muni import BeerShevaMuniSource
 from arch_job_bot.fetch.sources.drushim import DrushimSource
 from arch_job_bot.fetch.sources.jobkarov import JobKarovSource
 from arch_job_bot.fetch.sources.jobmaster import JobMasterSource
+from arch_job_bot.fetch.sources.maavarim import MaavarimSource
 
 FIX = pathlib.Path(__file__).parent / "fixtures"
 
@@ -25,6 +27,8 @@ CASES = [
     (JobKarovSource, "jobkarov.html"),
     (JobMasterSource, "jobmaster.html"),
     (DrushimSource, "drushim.html"),
+    (BeerShevaMuniSource, "beersheva_muni.html"),
+    (MaavarimSource, "maavarim.html"),
 ]
 
 

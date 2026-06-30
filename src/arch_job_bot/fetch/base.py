@@ -20,6 +20,10 @@ class BaseSource:
     arch_only: bool = False           # architecture-only board → geo only labels
     geo_trusted: bool = False          # query already narrowed to the BS area → geo only labels
     poll_minutes: int = 12            # desired cadence
+    # A substring that MUST appear on a correctly-loaded page (a structural/chrome marker
+    # that's present even when there are 0 results). If set and absent from a 200 body, the
+    # page is a challenge/error/broken render → treated as a fetch failure, NOT a silent zero.
+    sanity_marker: str | None = None
 
     def __init__(self, http, queries: list[str] | None = None,
                  *, arch_only: bool | None = None, geo_trusted: bool | None = None,
@@ -43,18 +47,24 @@ class BaseSource:
         does not sink the others. Raises SourceError only if EVERY query failed to
         fetch (so the health monitor can tell 'broken' from 'quiet')."""
         out: list[JobPosting] = []
-        fetched_any = False
+        healthy_any = False
         for url in self.queries:
             html = self.http.get_text(url)
             if html is None:
                 continue
-            fetched_any = True
+            if self.sanity_marker and self.sanity_marker not in html:
+                # 200 but the expected structure is absent → challenge page / broken render.
+                log.warning("%s: sanity marker %r missing for %s — treating as failure",
+                            self.name, self.sanity_marker, url)
+                continue
+            healthy_any = True
             try:
                 out.extend(self.parse(html, url))
             except Exception as e:  # noqa: BLE001 — a parser bug must not crash the loop
                 log.warning("%s: parse failed for %s: %s", self.name, url, e)
-        if self.queries and not fetched_any:
-            raise SourceError(f"{self.name}: all {len(self.queries)} queries failed to fetch")
+        if self.queries and not healthy_any:
+            raise SourceError(f"{self.name}: no query returned a healthy page "
+                              f"(all {len(self.queries)} failed fetch or sanity)")
         return out
 
     def parse(self, html: str, url: str) -> list[JobPosting]:  # pragma: no cover - overridden
@@ -73,6 +83,11 @@ def normalize_posted_date(raw: str | None, today: date | None = None) -> str | N
         return None
     raw = raw.strip()
     today = today or date.today()
+
+    iso = re.search(r"(\d{4})-(\d{2})-(\d{2})", raw)   # ISO-8601 (e.g. Maavarim content attr)
+    if iso:
+        y, mo, d = iso.groups()
+        return f"{int(d):02d}/{int(mo):02d}/{y}"
 
     m = re.search(r"(\d{1,2})[/.](\d{1,2})[/.](\d{2,4})", raw)
     if m:

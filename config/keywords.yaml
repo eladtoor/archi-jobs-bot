@@ -74,7 +74,8 @@ adjacent_positive:
   - שרטט
   - שרטוט
   - מידול
-  - בים            # "BIM" transliterated occasionally
+  # (Hebrew "בים" for BIM removed — it is a substring of many unrelated words like
+  #  מחשבים/חייבים and caused false positives; BIM is still matched via English "bim".)
 
 # Safe, specific English titles (bare "architect" is intentionally NOT here — it is
 # treated as ambiguous below, because English "architect" is dominated by software).
@@ -217,3 +218,16 @@ non_arch_drafting_domains:
   - מיזוג אוויר
   - אלקטרוניקה
   - מכונות
+
+# Freelance / service / framework PROCUREMENT tenders → reject (salaried-only scope).
+# Deliberately specific multi-word phrases that never appear in a salaried role title/JD,
+# so a municipal "מכרז כוח אדם" (salaried) is NOT caught.
+procurement_terms:
+  - מכרז מסגרת
+  - מכרז זוטא
+  - הזמנה להציע הצעות
+  - בקשה להציע הצעות
+  - קול קורא
+  - מכרז פומבי לקבלת שירותי
+  - למתן שירותי אדריכלות
+  - למתן שירותי תכנון

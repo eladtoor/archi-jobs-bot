@@ -61,3 +61,31 @@ sources:
     queries:
       - "https://www.drushim.co.il/jobs/search/%D7%90%D7%93%D7%A8%D7%99%D7%9B%D7%9C%D7%95%D7%AA/"   # אדריכלות
       - "https://www.drushim.co.il/jobs/search/%D7%90%D7%93%D7%A8%D7%99%D7%9B%D7%9C/"               # אדריכל
+
+  # ── v2: South public-sector salaried ──────────────────────────────────────────
+
+  # Beer Sheva municipality manpower tenders (מכרזי כוח אדם) — all Beer Sheva, salaried.
+  - key: beersheva_muni
+    enabled: true
+    arch_only: false
+    geo_trusted: true            # every tender is Beer Sheva; classifier drops non-arch
+    poll_minutes: 30
+    queries:
+      - "https://www.beer-sheva.muni.il/City/FreeInfo/Pages/Careers.aspx"
+
+  # Maavarim Negev — regional-council + municipal salaried engineering/planning/permit roles.
+  # Area views (field_job_area_tid): 217=engineers, 243=arch/design, 242=building; mem adds
+  # 3564=planning. Strict commuter geo (far Negev towns are in geo.yaml exclude_cities).
+  - key: maavarim
+    enabled: true
+    arch_only: false
+    geo_trusted: false
+    poll_minutes: 30
+    queries:
+      - "https://www.mnz.org.il/he/jobs?field_job_area_tid=217"   # N.Negev engineers
+      - "https://www.mnz.org.il/he/jobs?field_job_area_tid=243"   # N.Negev arch/design
+      - "https://www.mnz.org.il/he/jobs?field_job_area_tid=242"   # N.Negev building
+      - "https://www.mem.org.il/he/jobs?field_job_area_tid=217"   # W.Negev engineers
+      - "https://www.mem.org.il/he/jobs?field_job_area_tid=243"   # W.Negev arch/design
+      - "https://www.mem.org.il/he/jobs?field_job_area_tid=242"   # W.Negev building
+      - "https://www.mem.org.il/he/jobs?field_job_area_tid=3564"  # W.Negev planning &amp; dev

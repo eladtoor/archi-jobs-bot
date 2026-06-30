@@ -80,6 +80,11 @@ def classify(text: str) -> Classification:
         if reject_titles or tech_qual or tech_stack:
             return Classification(False, "tech: ambiguous architect + tech context")
 
+    # ── Gate 2b: freelance/service procurement tenders (salaried-only scope) ─────
+    procurement = _hits(kw.get("procurement_terms", []), t)
+    if procurement:
+        return Classification(False, f"procurement tender: {procurement}")
+
     # ── Gate 3: real-estate sales with no design role ───────────────────────────
     sales = _hits(kw.get("sales_terms", []), t)
     if sales and not building_signal:

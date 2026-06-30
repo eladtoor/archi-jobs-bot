@@ -23,6 +23,24 @@ DEFAULT_HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
+# A 200 whose body is actually a bot-challenge (Cloudflare/Incapsula). Treated as a
+# failure so a datacenter-blocked source raises SourceError instead of matching 0 jobs.
+_CHALLENGE_MARKERS = (
+    "just a moment",
+    "performing security verification",
+    "challenge-platform",
+    "cf-browser-verification",
+    "_cf_chl",
+    "attention required! | cloudflare",
+    "checking your browser before",
+    "this website uses a security service to protect",
+)
+
+
+def _is_challenge(text: str) -> bool:
+    head = (text or "")[:4000].lower()
+    return any(m in head for m in _CHALLENGE_MARKERS)
+
 
 class HttpClient:
     def __init__(
@@ -62,6 +80,12 @@ class HttpClient:
                 continue
 
             if resp.status_code == 200:
+                if _is_challenge(resp.text):
+                    log.warning("GET %s -> 200 but bot-challenge body (attempt %d/%d); backing off",
+                                url, attempt, self.max_retries)
+                    time.sleep(backoff)
+                    backoff *= 2
+                    continue
                 return resp.text
             if resp.status_code in (403, 429, 503):
                 log.warning("GET %s -> %s (attempt %d/%d); backing off",

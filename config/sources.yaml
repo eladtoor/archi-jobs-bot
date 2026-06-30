@@ -65,8 +65,12 @@ sources:
   # ── v2: South public-sector salaried ──────────────────────────────────────────
 
   # Beer Sheva municipality manpower tenders (מכרזי כוח אדם) — all Beer Sheva, salaried.
+  # DISABLED on cloud: the muni SharePoint sits behind an F5 BIG-IP that blocks the
+  # GitHub Actions datacenter ASN (confirmed: exhausted retries from the runner). Works
+  # from a residential IP — re-enable (enabled: true) on a home/Pi host. Maavarim's
+  # council=באר שבע facet partially covers the same municipal roles meanwhile.
   - key: beersheva_muni
-    enabled: true
+    enabled: false
     arch_only: false
     geo_trusted: true            # every tender is Beer Sheva; classifier drops non-arch
     poll_minutes: 30

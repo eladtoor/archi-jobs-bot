@@ -28,13 +28,23 @@ class JobPosting:
     sub_field: str | None = None     # derived (רישוי / תכנון ערים / עיצוב פנים ...)
     posted_date: str | None = None   # normalized to dd/mm/yyyy when parseable
     salary: str | None = None
-    raw_text: str = ""               # title + snippet/body used for matching
+    raw_text: str = ""               # whole job-card text (dedup hash / blob fallback)
+    description: str = ""            # clean JD snippet (role + duties), no card chrome
     content_hash: str | None = None
     first_seen: str = field(default_factory=_utcnow_iso)
 
     def full_text(self) -> str:
-        """Concatenated text the classifier/geo matcher run against."""
+        """Whole-card text — kept STABLE as the dedup content-hash basis. Not used to
+        decide relevance any more (that is match_text); still the geo blob fallback."""
         return " ".join(p for p in (self.title, self.company, self.raw_text) if p)
+
+    def match_text(self) -> str:
+        """Text the classifier / sub-field run against: the ROLE itself, not the whole
+        card. Deliberately EXCLUDES company — an architecture firm name must not rescue
+        a non-architecture role (e.g. a salesman at 'משרד אדריכלות X'). Falls back to
+        raw_text when a source cannot isolate a clean snippet, so recall is preserved."""
+        body = self.description or self.raw_text
+        return " ".join(p for p in (self.title, body) if p)
 
     def compute_content_hash(self) -> str:
         """Stable hash over normalized title+company+body — the dedup fallback for

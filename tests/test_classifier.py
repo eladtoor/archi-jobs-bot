@@ -52,3 +52,21 @@ def test_software_tokens_alone_not_sufficient():
 
 def test_bare_arch_word_with_tech_qualifier_rejected():
     assert not classify("אדריכל תוכנה").accepted
+
+
+# ── title-scoped reject: chrome arch word must not rescue a sales title ───────
+def test_sales_title_not_rescued_by_body_arch_word():
+    # The reported salesman alert: a stray "אדריכלות" in the card body/category set
+    # building_signal and disabled the sales gate. With the title passed in, the
+    # sales TITLE (no arch signal of its own) is rejected regardless of the chrome.
+    text = "איש מכירות- מקומך איתנו רשת פרפקט ליין סניף באר שבע. תחום אדריכלות כללית"
+    title = "איש מכירות- מקומך איתנו, רשת פרפקט ליין סניף באר שבע"
+    assert classify(text).accepted                       # old behavior (no title) still lenient
+    assert not classify(text, title=title).accepted      # title-scoped reject fires
+
+
+def test_real_arch_title_survives_sales_word_in_body():
+    # A genuine architecture title is NOT dropped just because the body mentions sales.
+    title = "אדריכל/ית רישוי לרשות רישוי בעירייה"
+    text = title + " הכנת בקשה להיתר; ניסיון במכירת דירות יתרון"
+    assert classify(text, title=title).accepted

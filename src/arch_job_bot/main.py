@@ -52,14 +52,18 @@ class Pipeline:
 
             matched = []
             for p in postings:
-                text = p.full_text()
-                if not classify(text).accepted:
+                parsed_location = p.city          # the board's own location, pre-enrichment
+                # Relevance: judge the ROLE (title + clean description), not the card blob.
+                if not classify(p.match_text(), title=p.title).accepted:
                     continue
-                ok_geo, geo_res = passes_geo(text, arch_only_source=source.geo_label_only)
+                # Geo: decide on the posting's own stated location when the source has one;
+                # otherwise the blob is the only signal (handled inside passes_geo).
+                ok_geo, geo_res = passes_geo(p.full_text(), location=parsed_location,
+                                             arch_only_source=source.geo_label_only)
                 if not ok_geo:
                     continue
-                p.sub_field = derive_subfield(text)
-                p.city = geo_res.city or p.city or geo_res.label
+                p.sub_field = derive_subfield(p.match_text())
+                p.city = geo_res.city or parsed_location or geo_res.label
                 if geo_res.region and not p.region:
                     p.region = geo_res.region
                 matched.append(p)

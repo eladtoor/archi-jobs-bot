@@ -48,9 +48,13 @@ class JobMasterSource(BaseSource):
             date_el = art.css_first("span.Gray")
             posted = normalize_posted_date(date_el.text()) if date_el else None
 
+            desc_el = art.css_first("div.jobShortDescription")
+            description = clean(desc_el.text()) if desc_el else ""
+
             raw = clean(art.text())[:4000]
             jobs.append(JobPosting(
                 source=self.name, job_id=job_id, title=title, url=full_url,
                 company=company, city=location, posted_date=posted, raw_text=raw,
+                description=description,
             ))
         return jobs

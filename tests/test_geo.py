@@ -42,3 +42,25 @@ def test_remote_in_scope():
 def test_region_word_in_scope():
     ok, _ = passes_geo("דרוש אדריכל באזור הדרום", arch_only_source=False)
     assert ok is True
+
+
+# ── decide on the job's OWN stated location (the Tel-Aviv / Lod fix) ──────────
+def test_stated_location_allowlist():
+    blob = "דרוש/ה אדריכל/ית. עבודה היברידית, פעילות בכל הארץ כולל הדרום"
+    # out-of-area named cities → drop, even with hybrid/דרום noise in the blob
+    assert passes_geo(blob, location="תל אביב יפו", arch_only_source=False)[0] is False
+    assert passes_geo(blob, location="לוד", arch_only_source=False)[0] is False
+    assert passes_geo(blob, location="הרצליה,חולון,תל אביב יפו",
+                      arch_only_source=False)[0] is False
+    # commuter ring (even when bundled with a non-commuter city) / region → keep
+    assert passes_geo(blob, location="באר שבע", arch_only_source=False)[0] is True
+    assert passes_geo(blob, location="באר שבע, תל אביב", arch_only_source=False)[0] is True
+    assert passes_geo(blob, location="דרום", arch_only_source=False)[0] is True
+
+
+def test_blob_fallback_excluded_city_beats_remote():
+    # No parsed location → blob fallback. An explicitly excluded city now outranks a
+    # stray remote/hybrid token (old order let "remote" win and leak the job).
+    ok, _ = passes_geo("דרוש אדריכל בתל אביב, אפשרות לעבודה היברידית",
+                       arch_only_source=False)
+    assert ok is False

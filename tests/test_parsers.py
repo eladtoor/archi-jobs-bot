@@ -52,3 +52,33 @@ def test_parser_job_ids_unique_and_stable(cls, fixture):
     ids = [j.job_id for j in jobs]
     # IDs should be mostly unique (a board may legitimately repeat a promoted job).
     assert len(set(ids)) >= max(3, len(ids) // 2)
+
+
+# The general boards that produced the bad alerts must isolate a clean JD snippet,
+# so relevance is judged on the role and not on the noisy whole-card blob.
+@pytest.mark.parametrize("cls,fixture", [
+    (AllJobsSource, "alljobs.html"),
+    (JobMasterSource, "jobmaster.html"),
+    (DrushimSource, "drushim.html"),
+])
+def test_description_extracted(cls, fixture):
+    jobs = cls(http=None).parse(_html(fixture), "https://example/")
+    assert any(j.description.strip() for j in jobs), \
+        f"{cls.name}: no clean description snippet extracted from any card"
+
+
+def test_match_text_excludes_company_and_chrome():
+    """A non-architecture role at an architecture firm must NOT be rescued: match_text
+    (title + clean description) excludes the company name and the card blob."""
+    from arch_job_bot.matching.classifier import classify
+    from arch_job_bot.models import JobPosting
+
+    p = JobPosting(
+        source="alljobs", title="דרוש/ה איש מכירות לסניף", url="https://x",
+        company="משרד אדריכלות מוביל", city="באר שבע",
+        description="אנו מגייסים איש/אשת מכירות נמרץ/ה לסניף החדש",
+        raw_text="כל טקסט הכרטיס כולל אדריכלות כללית ומשרות דומות",
+    )
+    assert "אדריכלות" in p.full_text()          # chrome word is present in the blob...
+    assert "אדריכלות" not in p.match_text()      # ...but not in the role text
+    assert not classify(p.match_text(), title=p.title).accepted

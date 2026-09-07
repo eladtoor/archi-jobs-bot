@@ -19,7 +19,7 @@
   },
   "drushim": {
     "ever_had_volume": true,
-    "consec_zero": 9,
+    "consec_zero": 10,
     "consec_fail": 0,
     "alerted": true
   },
